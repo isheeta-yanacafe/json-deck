@@ -1111,7 +1111,7 @@
       class: 'icon-btn nest-btn', title: 'Edit as raw JSON to convert into nested items',
       onclick: () => openJsonModal(idx, key)
     }, '{ }');
-    const children = [control, addSubBtn, nestBtn];
+    const children = isLabelCol ? [control] : [control, addSubBtn, nestBtn];
     if (hasKey){
       children.push(el('button', {
         class: 'icon-btn', title: 'Remove \u201c' + key + '\u201d from this record (other rows and the column itself are unaffected)',

@@ -1151,7 +1151,7 @@
       class: 'icon-btn nest-btn', title: 'JSONを直接入力して下位項目に変換',
       onclick: () => openJsonModal(idx, key)
     }, '{ }');
-    const children = [control, addSubBtn, nestBtn];
+    const children = isLabelCol ? [control] : [control, addSubBtn, nestBtn];
     if (hasKey){
       children.push(el('button', {
         class: 'icon-btn', title: 'このレコードから「' + key + '」を削除（他の行や列自体には影響しません）',
