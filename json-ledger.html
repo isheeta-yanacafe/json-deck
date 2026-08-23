@@ -262,7 +262,11 @@
   }
   .nested-field input[type="text"], .nested-field input[type="number"]{
     flex:1; min-width:0; font-family: var(--font-data); font-size:12px; padding:4px 6px;
-    border:1px solid var(--ink-soft); border-radius:3px; background:#fff; color:var(--ink);
+    border:1px solid transparent; border-radius:3px; background:transparent; color:var(--ink);
+    outline:none;
+  }
+  .nested-field input[type="text"]:focus, .nested-field input[type="number"]:focus{
+    background:#fff; box-shadow: 0 0 0 2px var(--brass);
   }
   .nested-field input[type="checkbox"]{ width:14px; height:14px; flex-shrink:0; }
   .nested-btn{
@@ -335,13 +339,13 @@
   .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 
   .toast{
-    position:fixed; bottom: 22px; left:50%; transform: translateX(-50%);
+    position:fixed; top: 16px; left:50%; transform: translateX(-50%) translateY(-8px);
     background: var(--brass-bright); color: var(--felt-dark); font-family: var(--font-label);
     font-size:12px; letter-spacing:0.5px; padding: 10px 18px; border-radius: 4px;
     box-shadow: 3px 3px 0 rgba(0,0,0,0.4); opacity:0; pointer-events:none; transition: opacity .25s ease, transform .25s ease;
-    text-transform: uppercase;
+    text-transform: uppercase; z-index: 60;
   }
-  .toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
 
   footer.notice{
     margin-top: 30px; font-size: 11px; color: rgba(243,236,216,0.4); font-family: var(--font-data);
@@ -807,7 +811,7 @@
   function addColumn(){
     const name = prompt('新しい項目名（キー）を入力してください:');
     if (!name) return;
-    if (state.columns.includes(name)){ toast('その項目は既に存在します'); return; }
+    if (state.columns.includes(name)){ toast('⚠ 項目名「' + name + '」は既に存在します（一意である必要があります）'); return; }
     pushUndo();
     state.columns.push(name);
     state.records.forEach(r => { if (!(name in r)) r[name] = ""; });
@@ -1243,10 +1247,11 @@
       arr.__expanded = expanded;
       container.innerHTML = '';
       const wrap = el('div', { class: 'nested-array' });
+      const allEmpty = arr.length > 0 && arr.every(item => Object.keys(item).length === 0);
       wrap.appendChild(el('span', {
         class: 'obj-chip nested-toggle',
         onclick: () => { expanded = !expanded; paint(); }
-      }, (expanded ? '▾ ' : '▸ ') + key + ' ' + arr.length + '件'));
+      }, (expanded ? '▾ ' : '▸ ') + key + ' ' + arr.length + '件' + (allEmpty ? '（未入力）' : '')));
 
       if (expanded){
         const panel = el('div', { class: 'nested-panel' });
@@ -1255,7 +1260,7 @@
           Object.keys(item).forEach(k => body.appendChild(renderNestedField(item, k, paint)));
           panel.appendChild(el('div', { class: 'nested-item' },
             el('div', { class: 'nested-item-head' },
-              el('span', {}, '#' + (ii + 1)),
+              arr.length > 1 ? el('span', {}, '#' + (ii + 1)) : null,
               el('button', { class: 'icon-btn', title: 'この項目を削除', onclick: () => { pushUndo(); arr.splice(ii, 1); markDirty(); paint(); } }, '🗑')
             ),
             body,
@@ -1265,7 +1270,7 @@
               onclick: () => {
                 const name = prompt('新しい項目名（キー）を入力してください:');
                 if (!name) return;
-                if (name in item){ toast('その項目は既に存在します'); return; }
+                if (name in item){ toast('⚠ フィールド名「' + name + '」は既に使われています（同じアイテム内で一意である必要があります）'); return; }
                 pushUndo();
                 item[name] = '';
                 markDirty();
