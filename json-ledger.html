@@ -173,6 +173,12 @@
     content: attr(data-placeholder);
     color: var(--ink-soft); opacity: 0.55; font-style: italic; pointer-events: none;
   }
+  .cell-label-muted{
+    opacity: 0.5;
+  }
+  .cell-label-muted:focus{
+    opacity: 1;
+  }
   .cell-wrap{ display:flex; align-items:flex-start; gap:4px; flex-wrap:wrap; }
   .cell-wrap > :first-child{ flex:1 1 70px; min-width:70px; }
   .nest-btn{
@@ -788,6 +794,26 @@
     return '';
   }
 
+  // key が「配列フィールドXを下位項目に変換した際、元の値を退避した
+  // 自動生成ラベル列（X + 'のラベル'）」かどうかを判定する。
+  // 判定基準は「接尾辞が一致する」かつ「接尾辞を除いた元のキー名が
+  // 現在そのレコードで配列として存在する」の両方。
+  const NESTED_LABEL_SUFFIX = 'のラベル';
+  function isNestedLabelKey(idx, key){
+    if (!key.endsWith(NESTED_LABEL_SUFFIX)) return false;
+    const baseKey = key.slice(0, -NESTED_LABEL_SUFFIX.length);
+    const rec = state.records[idx];
+    return !!rec && Array.isArray(rec[baseKey]);
+  }
+  // テーブル/カードの列全体を控えめな見た目にするための判定（レコード
+  // 単位ではなく、列名ベース。あるレコードでまだ配列化されていなくても、
+  // 同名の「◯◯のラベル」列がファイル全体の列一覧に存在すれば対象とする）。
+  function isNestedLabelColumn(key){
+    if (!key.endsWith(NESTED_LABEL_SUFFIX)) return false;
+    const baseKey = key.slice(0, -NESTED_LABEL_SUFFIX.length);
+    return state.columns.includes(baseKey);
+  }
+
   function addRecord(){
     if (state.wrapper.type === 'single-object'){
       toast('⚠ 単一オブジェクトのJSONにはレコードを追加できません');
@@ -1029,18 +1055,23 @@
     // ふさわしいウィジェット（チェックボックス／数値欄）を先出しする。
     // 実際の値はまだ書き込まず、本当に操作された時だけ書き込む。
     const type = hasKey ? valueType(value) : valueType(inferColumnDefault(key));
+    const isLabelCol = isNestedLabelKey(idx, key) || isNestedLabelColumn(key);
     let control;
     if (type === 'boolean'){
-      control = el('input', {
+      const boolAttrs = {
         type: 'checkbox', checked: value ? 'checked' : null,
-        onchange: (e) => { pushUndo(); updateValue(idx, key, e.target.checked); if (!hasKey) render(); }
-      });
+        onchange: (e) => { pushUndo(); updateValue(idx, key, e.target.checked); if (!hasKey || isLabelCol) render(); }
+      };
+      if (isLabelCol) boolAttrs.class = 'cell-label-muted';
+      control = el('input', boolAttrs);
     } else if (type === 'number'){
-      control = el('input', {
+      const numAttrs = {
         type: 'number', value: hasKey ? value : '',
         oninput: (e) => { pushUndo(e.target); updateValue(idx, key, e.target.value === '' ? '' : parseFloat(e.target.value)); },
-        onblur: () => { if (!hasKey) render(); } // 未設定→入力ありに変わったら再描画して🗑等を出す
-      });
+        onblur: () => { if (!hasKey || isLabelCol) render(); } // 未設定→入力ありに変わったら再描画して🗑等を出す
+      };
+      if (isLabelCol) numAttrs.class = 'cell-label-muted';
+      control = el('input', numAttrs);
     } else if (key === '_added_at'){
       // 保存・ソートに使う生の値は常にISO8601 UTC文字列のまま。表示だけJSTの
       // 読みやすい形式に整形し、フォーカス（編集開始）時だけ生の値に戻す。
@@ -1066,7 +1097,7 @@
       // string（配列/オブジェクト型と推定されても、未設定の間はテキストのプレースホルダーのまま）
       const displayValue = value === undefined || value === null ? '' : String(value);
       const attrs = {
-        class: 'cell-editable' + (hasKey ? '' : ' cell-unset'),
+        class: 'cell-editable' + (hasKey ? '' : ' cell-unset') + (isLabelCol ? ' cell-label-muted' : ''),
         contenteditable: 'true',
         onblur: (e) => {
           const text = e.target.textContent;
@@ -1074,7 +1105,7 @@
           if (hasKey && text === displayValue) return; // 実際の編集が無いなら何もしない(null→""化を防ぐ)
           pushUndo();
           updateValue(idx, key, text);
-          if (!hasKey) render();
+          if (!hasKey || isLabelCol) render();
         }
       };
       if (!hasKey) attrs['data-placeholder'] = '未設定（クリックして入力）';
