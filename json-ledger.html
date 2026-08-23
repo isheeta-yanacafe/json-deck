@@ -1083,22 +1083,25 @@
     const addSubBtn = el('button', {
       class: 'icon-btn nest-btn', title: '下位項目を追加（現在の値は「' + key + 'のラベル」に自動保存されます）',
       onclick: () => {
-        const hasContent = value !== '' && value !== null && value !== undefined;
+        // クロージャのvalueは最後にrender()された時点のスナップショットで古い場合があるため
+        // （既存キーは値を編集してもrender()されない仕様）、クリック時点の実際の値を読み直す
+        const currentValue = state.records[idx][key];
+        const hasContent = currentValue !== '' && currentValue !== null && currentValue !== undefined;
         const labelKey = key + 'のラベル';
         const labelKeyTaken = hasContent && (labelKey in state.records[idx]);
         if (hasContent){
           const msg = labelKeyTaken
-            ? ('「' + key + '」の現在の値「' + value + '」は下位項目（配列）に置き換わります。\n' +
+            ? ('「' + key + '」の現在の値「' + currentValue + '」は下位項目（配列）に置き換わります。\n' +
                '※「' + labelKey + '」という列が既に存在するため、元の値は自動保存できず失われます。\n\n' +
                '続行しますか？')
-            : ('「' + key + '」の現在の値「' + value + '」は下位項目（配列）に置き換わります。\n' +
+            : ('「' + key + '」の現在の値「' + currentValue + '」は下位項目（配列）に置き換わります。\n' +
                '元の値は自動的に「' + labelKey + '」という新しい項目に保存されます。\n\n' +
                '続行しますか？');
           if (!confirm(msg)) return;
         }
         pushUndo();
         if (hasContent && !labelKeyTaken){
-          state.records[idx][labelKey] = value;
+          state.records[idx][labelKey] = currentValue;
         }
         const arr = [{}];
         arr.__expanded = true;

@@ -1043,22 +1043,25 @@
     const addSubBtn = el('button', {
       class: 'icon-btn nest-btn', title: 'Add nested items (the current value is auto-saved to \u201c' + key + ' label\u201d)',
       onclick: () => {
-        const hasContent = value !== '' && value !== null && value !== undefined;
+        // The closed-over "value" can be stale (a snapshot from the last render); existing
+        // keys don't trigger a re-render on edit, so re-read the live value at click time.
+        const currentValue = state.records[idx][key];
+        const hasContent = currentValue !== '' && currentValue !== null && currentValue !== undefined;
         const labelKey = key + ' label';
         const labelKeyTaken = hasContent && (labelKey in state.records[idx]);
         if (hasContent){
           const msg = labelKeyTaken
-            ? ('The current value of \u201c' + key + '\u201d (\u201c' + value + '\u201d) will be replaced with nested items.\n' +
+            ? ('The current value of \u201c' + key + '\u201d (\u201c' + currentValue + '\u201d) will be replaced with nested items.\n' +
                'Note: a column named \u201c' + labelKey + '\u201d already exists, so the original value can\'t be auto-saved and will be lost.\n\n' +
                'Continue?')
-            : ('The current value of \u201c' + key + '\u201d (\u201c' + value + '\u201d) will be replaced with nested items.\n' +
+            : ('The current value of \u201c' + key + '\u201d (\u201c' + currentValue + '\u201d) will be replaced with nested items.\n' +
                'The original value will be automatically saved to a new column called \u201c' + labelKey + '\u201d.\n\n' +
                'Continue?');
           if (!confirm(msg)) return;
         }
         pushUndo();
         if (hasContent && !labelKeyTaken){
-          state.records[idx][labelKey] = value;
+          state.records[idx][labelKey] = currentValue;
         }
         const arr = [{}];
         arr.__expanded = true;
