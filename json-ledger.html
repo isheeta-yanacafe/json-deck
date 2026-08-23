@@ -1261,6 +1261,7 @@
             body,
             el('button', {
               class: 'nested-btn',
+              title: 'このアイテムに新しいフィールドを追加します（例: 価格、備考）。同じ名前のフィールドは1つのアイテムに1つまでです',
               onclick: () => {
                 const name = prompt('新しい項目名（キー）を入力してください:');
                 if (!name) return;
@@ -1270,11 +1271,12 @@
                 markDirty();
                 paint();
               }
-            }, '＋ 項目')
+            }, '＋ フィールド')
           ));
         });
         panel.appendChild(el('button', {
           class: 'nested-btn',
+          title: '新しいアイテムを追加します。1つ目とは別の内容を入力する場合はこちらを押してください',
           onclick: () => {
             pushUndo();
             const template = {};
@@ -1283,7 +1285,7 @@
             markDirty();
             paint();
           }
-        }, '＋ 追加'));
+        }, '＋ アイテム追加'));
         wrap.appendChild(panel);
       }
       container.appendChild(wrap);

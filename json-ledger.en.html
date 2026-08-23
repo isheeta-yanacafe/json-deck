@@ -1201,6 +1201,7 @@
             body,
             el('button', {
               class: 'nested-btn',
+              title: 'Add a new field to this item (e.g. price, notes). Each field name can only be used once per item.',
               onclick: () => {
                 const name = prompt('Enter a name for the new field (key):');
                 if (!name) return;
@@ -1210,11 +1211,12 @@
                 markDirty();
                 paint();
               }
-            }, '+ Field')
+            }, '+ Add Field')
           ));
         });
         panel.appendChild(el('button', {
           class: 'nested-btn',
+          title: 'Add a new item. Use this if you want to enter separate content from the first one.',
           onclick: () => {
             pushUndo();
             const template = {};
@@ -1223,7 +1225,7 @@
             markDirty();
             paint();
           }
-        }, '+ Add'));
+        }, '+ Add Item'));
         wrap.appendChild(panel);
       }
       container.appendChild(wrap);
