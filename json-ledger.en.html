@@ -1237,7 +1237,14 @@
               class: 'nested-btn',
               title: 'Add a new field to this item (e.g. price, notes). Each field name can only be used once per item.',
               onclick: () => {
-                const name = prompt('Enter a name for the new field (key):');
+                const isFirstField = Object.keys(item).length === 0;
+                const promptText = isFirstField
+                  ? 'Enter a name for the new field (e.g. name, price, date).\n' +
+                    'This is a field label shared by all items.\n' +
+                    'Enter a label for the value — not the actual value itself\n' +
+                    '(e.g. not a specific product name or amount).'
+                  : 'Enter a name for the new field (key):';
+                const name = prompt(promptText);
                 if (!name) return;
                 if (name in item){ toast('⚠ The field name "' + name + '" is already used in this item (field names must be unique within an item)'); return; }
                 pushUndo();

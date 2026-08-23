@@ -1297,7 +1297,14 @@
               class: 'nested-btn',
               title: 'このアイテムに新しいフィールドを追加します（例: 価格、備考）。同じ名前のフィールドは1つのアイテムに1つまでです',
               onclick: () => {
-                const name = prompt('新しい項目名（キー）を入力してください:');
+                const isFirstField = Object.keys(item).length === 0;
+                const promptText = isFirstField
+                  ? '新しいフィールド名を入力してください（例: 名称、価格、日付）。\n' +
+                    'これは全アイテムに共通する「項目の見出し」です。\n' +
+                    '個別の値（例: 具体的な商品名や金額そのもの）ではなく、\n' +
+                    '値に付けるラベルを入力してください。'
+                  : '新しい項目名（キー）を入力してください:';
+                const name = prompt(promptText);
                 if (!name) return;
                 if (name in item){ toast('⚠ フィールド名「' + name + '」は既に使われています（同じアイテム内で一意である必要があります）'); return; }
                 pushUndo();
