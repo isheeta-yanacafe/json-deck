@@ -1048,7 +1048,13 @@
         const currentValue = state.records[idx][key];
         const hasContent = currentValue !== '' && currentValue !== null && currentValue !== undefined;
         const labelKey = key + ' label';
-        const labelKeyTaken = hasContent && (labelKey in state.records[idx]);
+        // Judge by "does this column already hold a meaningful value", not by mere
+        // presence. addRecord() pre-seeds every known column with an empty default,
+        // so a plain `in` check would treat an untouched placeholder column as
+        // "already taken" and skip saving the real value.
+        const existingLabelValue = state.records[idx][labelKey];
+        const labelKeyTaken = hasContent &&
+          existingLabelValue !== undefined && existingLabelValue !== null && existingLabelValue !== '';
         if (hasContent){
           const msg = labelKeyTaken
             ? ('The current value of \u201c' + key + '\u201d (\u201c' + currentValue + '\u201d) will be replaced with nested items.\n' +

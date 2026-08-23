@@ -1088,7 +1088,13 @@
         const currentValue = state.records[idx][key];
         const hasContent = currentValue !== '' && currentValue !== null && currentValue !== undefined;
         const labelKey = key + 'のラベル';
-        const labelKeyTaken = hasContent && (labelKey in state.records[idx]);
+        // 列の「存在」ではなく「意味のある値が入っているか」で判定する。
+        // addRecord()は既存の全列を空文字列等であらかじめセットするため、
+        // 単純な in 判定だと「まだ何も書いていない空のプレースホルダー」を
+        // 誤って「既に使われている」と判定し、保存をスキップしてしまう。
+        const existingLabelValue = state.records[idx][labelKey];
+        const labelKeyTaken = hasContent &&
+          existingLabelValue !== undefined && existingLabelValue !== null && existingLabelValue !== '';
         if (hasContent){
           const msg = labelKeyTaken
             ? ('「' + key + '」の現在の値「' + currentValue + '」は下位項目（配列）に置き換わります。\n' +
