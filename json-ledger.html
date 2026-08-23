@@ -265,6 +265,12 @@
     border:1px solid transparent; border-radius:3px; background:transparent; color:var(--ink);
     outline:none;
   }
+  .nested-field input[type="text"]{
+    text-overflow: ellipsis;
+  }
+  .nested-field input[type="text"]:focus{
+    text-overflow: clip;
+  }
   .nested-field input[type="text"]:focus, .nested-field input[type="number"]:focus{
     background:#fff; box-shadow: 0 0 0 2px var(--brass);
   }
@@ -1075,18 +1081,29 @@
       control = displayValue ? el('div', attrs, displayValue) : el('div', attrs);
     }
     const addSubBtn = el('button', {
-      class: 'icon-btn nest-btn', title: '下位項目を追加（現在の値は下位項目に置き換わります）',
+      class: 'icon-btn nest-btn', title: '下位項目を追加（現在の値は「' + key + 'のラベル」に自動保存されます）',
       onclick: () => {
         const hasContent = value !== '' && value !== null && value !== undefined;
-        if (hasContent && !confirm(
-          '「' + key + '」の現在の値「' + value + '」は下位項目（配列）に置き換わり、失われます。\n' +
-          '元の値を残したい場合は、キャンセルして先に「＋ 項目追加」で別の列（例: variants）を作り、そちらで下位項目を追加してください。\n\n' +
-          '続行しますか？'
-        )) return;
+        const labelKey = key + 'のラベル';
+        const labelKeyTaken = hasContent && (labelKey in state.records[idx]);
+        if (hasContent){
+          const msg = labelKeyTaken
+            ? ('「' + key + '」の現在の値「' + value + '」は下位項目（配列）に置き換わります。\n' +
+               '※「' + labelKey + '」という列が既に存在するため、元の値は自動保存できず失われます。\n\n' +
+               '続行しますか？')
+            : ('「' + key + '」の現在の値「' + value + '」は下位項目（配列）に置き換わります。\n' +
+               '元の値は自動的に「' + labelKey + '」という新しい項目に保存されます。\n\n' +
+               '続行しますか？');
+          if (!confirm(msg)) return;
+        }
         pushUndo();
+        if (hasContent && !labelKeyTaken){
+          state.records[idx][labelKey] = value;
+        }
         const arr = [{}];
         arr.__expanded = true;
         updateValue(idx, key, arr);
+        computeColumns();
         render();
       }
     }, '+項目');
@@ -1226,9 +1243,10 @@
         onclick: () => openJsonModalGeneric(k, value, (parsed) => { pushUndo(); item[k] = parsed; markDirty(); repaint(); })
       }, '{...} 編集'));
     } else {
+      const initialStr = value === undefined || value === null ? '' : String(value);
       field.appendChild(el('input', {
-        type: 'text', value: value === undefined || value === null ? '' : String(value),
-        oninput: (e) => { pushUndo(e.target); item[k] = e.target.value; markDirty(); }
+        type: 'text', value: initialStr, title: initialStr || null,
+        oninput: (e) => { pushUndo(e.target); item[k] = e.target.value; markDirty(); e.target.title = e.target.value; }
       }));
     }
 
@@ -1247,11 +1265,13 @@
       arr.__expanded = expanded;
       container.innerHTML = '';
       const wrap = el('div', { class: 'nested-array' });
+      const labelValue = state.records[idx] ? state.records[idx][key + 'のラベル'] : undefined;
+      const displayName = (labelValue !== undefined && labelValue !== null && labelValue !== '') ? String(labelValue) : key;
       const allEmpty = arr.length > 0 && arr.every(item => Object.keys(item).length === 0);
       wrap.appendChild(el('span', {
         class: 'obj-chip nested-toggle',
         onclick: () => { expanded = !expanded; paint(); }
-      }, (expanded ? '▾ ' : '▸ ') + key + ' ' + arr.length + '件' + (allEmpty ? '（未入力）' : '')));
+      }, (expanded ? '▾ ' : '▸ ') + displayName + ' ' + arr.length + '件' + (allEmpty ? '（未入力）' : '')));
 
       if (expanded){
         const panel = el('div', { class: 'nested-panel' });

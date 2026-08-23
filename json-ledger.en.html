@@ -255,6 +255,12 @@
     border:1px solid transparent; border-radius:3px; background:transparent; color:var(--ink);
     outline:none;
   }
+  .nested-field input[type="text"]{
+    text-overflow: ellipsis;
+  }
+  .nested-field input[type="text"]:focus{
+    text-overflow: clip;
+  }
   .nested-field input[type="text"]:focus, .nested-field input[type="number"]:focus{
     background:#fff; box-shadow: 0 0 0 2px var(--brass);
   }
@@ -1035,18 +1041,29 @@
       control = displayValue ? el('div', attrs, displayValue) : el('div', attrs);
     }
     const addSubBtn = el('button', {
-      class: 'icon-btn nest-btn', title: 'Add nested items (this replaces the current value)',
+      class: 'icon-btn nest-btn', title: 'Add nested items (the current value is auto-saved to \u201c' + key + ' label\u201d)',
       onclick: () => {
         const hasContent = value !== '' && value !== null && value !== undefined;
-        if (hasContent && !confirm(
-          'The current value of \u201c' + key + '\u201d (\u201c' + value + '\u201d) will be replaced with nested items and lost.\n' +
-          'To keep the original value, cancel and first use \u201c+ Add Field\u201d to create a separate column (e.g. variants), then add nested items there.\n\n' +
-          'Continue?'
-        )) return;
+        const labelKey = key + ' label';
+        const labelKeyTaken = hasContent && (labelKey in state.records[idx]);
+        if (hasContent){
+          const msg = labelKeyTaken
+            ? ('The current value of \u201c' + key + '\u201d (\u201c' + value + '\u201d) will be replaced with nested items.\n' +
+               'Note: a column named \u201c' + labelKey + '\u201d already exists, so the original value can\'t be auto-saved and will be lost.\n\n' +
+               'Continue?')
+            : ('The current value of \u201c' + key + '\u201d (\u201c' + value + '\u201d) will be replaced with nested items.\n' +
+               'The original value will be automatically saved to a new column called \u201c' + labelKey + '\u201d.\n\n' +
+               'Continue?');
+          if (!confirm(msg)) return;
+        }
         pushUndo();
+        if (hasContent && !labelKeyTaken){
+          state.records[idx][labelKey] = value;
+        }
         const arr = [{}];
         arr.__expanded = true;
         updateValue(idx, key, arr);
+        computeColumns();
         render();
       }
     }, '+Field');
@@ -1166,9 +1183,10 @@
         onclick: () => openJsonModalGeneric(k, value, (parsed) => { pushUndo(); item[k] = parsed; markDirty(); repaint(); })
       }, '{...} Edit'));
     } else {
+      const initialStr = value === undefined || value === null ? '' : String(value);
       field.appendChild(el('input', {
-        type: 'text', value: value === undefined || value === null ? '' : String(value),
-        oninput: (e) => { pushUndo(e.target); item[k] = e.target.value; markDirty(); }
+        type: 'text', value: initialStr, title: initialStr || null,
+        oninput: (e) => { pushUndo(e.target); item[k] = e.target.value; markDirty(); e.target.title = e.target.value; }
       }));
     }
 
@@ -1187,11 +1205,13 @@
       arr.__expanded = expanded;
       container.innerHTML = '';
       const wrap = el('div', { class: 'nested-array' });
+      const labelValue = state.records[idx] ? state.records[idx][key + ' label'] : undefined;
+      const displayName = (labelValue !== undefined && labelValue !== null && labelValue !== '') ? String(labelValue) : key;
       const allEmpty = arr.length > 0 && arr.every(item => Object.keys(item).length === 0);
       wrap.appendChild(el('span', {
         class: 'obj-chip nested-toggle',
         onclick: () => { expanded = !expanded; paint(); }
-      }, (expanded ? '\u25be ' : '\u25b8 ') + key + ' (' + arr.length + ')' + (allEmpty ? ' (empty)' : '')));
+      }, (expanded ? '\u25be ' : '\u25b8 ') + displayName + ' (' + arr.length + ')' + (allEmpty ? ' (empty)' : '')));
 
       if (expanded){
         const panel = el('div', { class: 'nested-panel' });
