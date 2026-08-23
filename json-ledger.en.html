@@ -184,6 +184,8 @@
   .nest-btn{
     font-family: var(--font-data); font-size: 10px; flex-shrink:0;
   }
+  .col-name{ cursor: pointer; }
+  .rec-card .rec-label{ cursor: pointer; }
   .row-actions{ white-space:nowrap; }
   .icon-btn{
     background:none; border:none; cursor:pointer; font-size:13px; opacity:0.5; padding:2px 4px;
@@ -858,6 +860,36 @@
     });
   }
 
+  function renameColumn(oldName){
+    const newName = prompt('Enter a new name for this field:', oldName);
+    if (!newName || newName === oldName) return;
+    if (state.columns.includes(newName)){
+      toast('\u26a0 The field name "' + newName + '" already exists (must be unique)');
+      return;
+    }
+    pushUndo();
+    const labelSuffix = ' label';
+    const oldLabelKey = oldName + labelSuffix;
+    const newLabelKey = newName + labelSuffix;
+    const hasLabelCol = state.columns.includes(oldLabelKey) && !state.columns.includes(newLabelKey);
+    const colIdx = state.columns.indexOf(oldName);
+    if (colIdx !== -1) state.columns[colIdx] = newName;
+    state.records.forEach(r => {
+      if (oldName in r){ r[newName] = r[oldName]; delete r[oldName]; }
+    });
+    if (hasLabelCol){
+      const labelIdx = state.columns.indexOf(oldLabelKey);
+      if (labelIdx !== -1) state.columns[labelIdx] = newLabelKey;
+      state.records.forEach(r => {
+        if (oldLabelKey in r){ r[newLabelKey] = r[oldLabelKey]; delete r[oldLabelKey]; }
+      });
+    }
+    if (state.sortKey === oldName) state.sortKey = newName;
+    markDirty();
+    render();
+    toast('Renamed "' + oldName + '" to "' + newName + '"');
+  }
+
   function deleteColumn(name){
     if (!confirm('Delete field \u201c' + name + '\u201d from all records?')) return;
     pushUndo();
@@ -1368,7 +1400,7 @@
     state.columns.forEach((col, i) => {
       thead.appendChild(el('th', {},
         el('span', { class: 'col-move', title: 'Move left', onclick: () => moveColumn(col, -1) }, '◀'),
-        col,
+        el('span', { class: 'col-name', title: 'Double-click to rename this field', ondblclick: () => renameColumn(col) }, col),
         el('span', { class: 'col-move', title: 'Move right', onclick: () => moveColumn(col, 1) }, '▶'),
         el('span', { class: 'del-col', onclick: () => deleteColumn(col) }, '✕')
       ));
@@ -1404,7 +1436,7 @@
         if (!(col in record)) return; // このレコードに存在しない項目はカードごと非表示
         const field = el('div', { class: 'rec-field' },
           el('div', { class: 'rec-label-row' },
-            el('span', { class: 'rec-label' }, col),
+            el('span', { class: 'rec-label', title: 'Double-click to rename this field', ondblclick: () => renameColumn(col) }, col),
             el('span', { class: 'card-move' },
               el('span', { title: 'Move up', onclick: () => moveColumn(col, -1) }, '▲'),
               el('span', { title: 'Move down', onclick: () => moveColumn(col, 1) }, '▼')

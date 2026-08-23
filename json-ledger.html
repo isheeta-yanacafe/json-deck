@@ -184,6 +184,8 @@
   .nest-btn{
     font-family: var(--font-data); font-size: 10px; flex-shrink:0;
   }
+  .col-name{ cursor: pointer; }
+  .rec-card .rec-label{ cursor: pointer; }
   .row-actions{ white-space:nowrap; }
   .icon-btn{
     background:none; border:none; cursor:pointer; font-size:13px; opacity:0.5; padding:2px 4px;
@@ -868,6 +870,40 @@
     });
   }
 
+  function renameColumn(oldName){
+    const newName = prompt('新しい項目名を入力してください:', oldName);
+    if (!newName || newName === oldName) return;
+    if (state.columns.includes(newName)){
+      toast('⚠ 項目名「' + newName + '」は既に存在します（一意である必要があります）');
+      return;
+    }
+    pushUndo();
+    const labelSuffix = 'のラベル';
+    const oldLabelKey = oldName + labelSuffix;
+    const newLabelKey = newName + labelSuffix;
+    const hasLabelCol = state.columns.includes(oldLabelKey) && !state.columns.includes(newLabelKey);
+    // 本体の列名を変更
+    const colIdx = state.columns.indexOf(oldName);
+    if (colIdx !== -1) state.columns[colIdx] = newName;
+    state.records.forEach(r => {
+      if (oldName in r){ r[newName] = r[oldName]; delete r[oldName]; }
+    });
+    // 対応する「◯◯のラベル」列があれば、列名だけ追従させる（値はそのまま）
+    if (hasLabelCol){
+      const labelIdx = state.columns.indexOf(oldLabelKey);
+      if (labelIdx !== -1) state.columns[labelIdx] = newLabelKey;
+      state.records.forEach(r => {
+        if (oldLabelKey in r){ r[newLabelKey] = r[oldLabelKey]; delete r[oldLabelKey]; }
+      });
+    }
+    // ソート中の列がリネームされた場合は、ソート基準も追従させる
+    // （state.tagFilterは列名ではなくタグの値そのものを保持する仕組みのため対応不要）
+    if (state.sortKey === oldName) state.sortKey = newName;
+    markDirty();
+    render();
+    toast('「' + oldName + '」を「' + newName + '」に変更しました');
+  }
+
   function deleteColumn(name){
     if (!confirm('項目「' + name + '」を全レコードから削除しますか？')) return;
     pushUndo();
@@ -1427,7 +1463,7 @@
     state.columns.forEach((col, i) => {
       thead.appendChild(el('th', {},
         el('span', { class: 'col-move', title: '左（前）へ移動', onclick: () => moveColumn(col, -1) }, '◀'),
-        col,
+        el('span', { class: 'col-name', title: 'ダブルクリックで項目名を変更', ondblclick: () => renameColumn(col) }, col),
         el('span', { class: 'col-move', title: '右（後）へ移動', onclick: () => moveColumn(col, 1) }, '▶'),
         el('span', { class: 'del-col', onclick: () => deleteColumn(col) }, '✕')
       ));
@@ -1463,7 +1499,7 @@
         if (!(col in record)) return; // このレコードに存在しない項目はカードごと非表示
         const field = el('div', { class: 'rec-field' },
           el('div', { class: 'rec-label-row' },
-            el('span', { class: 'rec-label' }, col),
+            el('span', { class: 'rec-label', title: 'ダブルクリックで項目名を変更', ondblclick: () => renameColumn(col) }, col),
             el('span', { class: 'card-move' },
               el('span', { title: '上へ移動', onclick: () => moveColumn(col, -1) }, '▲'),
               el('span', { title: '下へ移動', onclick: () => moveColumn(col, 1) }, '▼')
