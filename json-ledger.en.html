@@ -1098,7 +1098,14 @@
         }
         pushUndo();
         if (hasContent && !labelKeyTaken){
-          state.records[idx][labelKey] = currentValue;
+          // Always store the label as a string, regardless of the original
+          // value's type. Otherwise a boolean/number value gets copied as-is
+          // and the label column ends up rendered as a checkbox/number field
+          // instead of text (e.g. an AVAILABLE column's true/false), which
+          // can't serve as a meaningful identifying label for the nested
+          // items. Storing it as a string lets the user later edit it into
+          // something meaningful.
+          state.records[idx][labelKey] = String(currentValue);
         }
         const arr = [{}];
         arr.__expanded = true;

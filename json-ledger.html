@@ -1138,7 +1138,13 @@
         }
         pushUndo();
         if (hasContent && !labelKeyTaken){
-          state.records[idx][labelKey] = currentValue;
+          // 型に関わらず、ラベル列は常に文字列として保存する。
+          // 真偽値や数値のままだと、ラベル列がチェックボックス/数値欄に
+          // なってしまい、複数の下位項目をまとめる「識別名」として
+          // 機能しない（例: AVAILABLE列のtrue/falseがそのままコピーされ、
+          // チェックボックスの列になってしまう）。文字列にしておけば、
+          // 後から人間が意味のある文言に書き換えられる。
+          state.records[idx][labelKey] = String(currentValue);
         }
         const arr = [{}];
         arr.__expanded = true;
