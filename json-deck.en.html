@@ -670,9 +670,9 @@
   function loadDemo(){
     if (!confirmDiscardIfDirty()) return;
     const demo = [
-      { name: "Hojicha Latte", price: 580, tags: ["Popular", "Hot Available"], allergens: ["Dairy"], available: true },
-      { name: "Matcha Red Bean Parfait", price: 780, tags: ["Seasonal"], allergens: ["Dairy", "Wheat"], available: true },
-      { name: "House-made Ginger Ale", price: 520, tags: ["Vegan-Friendly"], allergens: [], available: false }
+      { name: "Hojicha Latte", price: 5.8, tags: ["Popular", "Hot Available"], allergens: ["Dairy"], available: true },
+      { name: "Matcha Red Bean Parfait", price: 7.8, tags: ["Seasonal"], allergens: ["Dairy", "Wheat"], available: true },
+      { name: "House-made Ginger Ale", price: 5.2, tags: ["Vegan-Friendly"], allergens: [], available: false }
     ];
     state.records = demo;
     state.wrapper = { type: 'wrapped', key: 'menu', rest: { store: "yana café" } };
