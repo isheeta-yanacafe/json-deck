@@ -1,7 +1,7 @@
 {
-  "name": "json-ledger",
+  "name": "json-deck",
   "private": true,
-  "description": "Dev/test tooling only. The app itself (json-ledger.html / json-ledger.en.html) has no build step — download it and open it in a browser.",
+  "description": "Dev/test tooling only. The app itself (json-deck.html / json-deck.en.html) has no build step — download it and open it in a browser.",
   "scripts": {
     "test": "node --test tests/*.test.js"
   },
