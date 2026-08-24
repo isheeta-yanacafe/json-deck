@@ -408,8 +408,8 @@
       <button class="btn ghost" id="sortDirToggle" disabled title="昇順/降順を切り替え">▲ 昇順</button>
     </div>
     <div class="toggle">
-      <button id="tableToggle" class="active">テーブル</button>
-      <button id="cardToggle">カード</button>
+      <button id="cardToggle" class="active">カード</button>
+      <button id="tableToggle">テーブル</button>
     </div>
   </div>
 
@@ -478,7 +478,7 @@
     fileName: "untitled.json",
     fileHandle: null,    // File System Access handle, if available
     wrapper: null,        // { type: 'root-array' } | { type: 'wrapped', key: 'items' } | { type: 'single-object' }
-    view: 'table',
+    view: 'card',
     query: '',
     tagFilter: null,       // when set, only records containing this tag value (in any array field) are shown
     showAddedAt: false,    // when true, _added_at is included in computeColumns() and shown as a normal column

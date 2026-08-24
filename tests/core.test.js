@@ -43,6 +43,13 @@ function setState(patch){
   return page.evaluate((patch) => Object.assign(window.__jsonLedgerTest.state, patch), patch);
 }
 
+// ---------------- initial state ----------------
+
+test('initial state: view defaults to card', async () => {
+  const state = await getState();
+  assert.equal(state.view, 'card');
+});
+
 // ---------------- normalize() ----------------
 
 test('normalize: top-level array of objects becomes root-array', async () => {
@@ -259,6 +266,7 @@ test('arrayCellKind: an array containing one long string is "list", even with sh
 // ---------------- UI: tag chips vs. plain list rendering, and tagFilter interaction ----------------
 
 test('UI: a short-string array renders as tag chips; clicking one sets state.tagFilter and filters rows', async () => {
+  await setState({ view: 'table' });
   await callTest('loadJSONText', JSON.stringify([
     { name: 'Item A', tags: ['人気', '定番'] },
     { name: 'Item B', tags: ['季節限定'] }
@@ -278,6 +286,7 @@ test('UI: a short-string array renders as tag chips; clicking one sets state.tag
 });
 
 test('UI: an array with a long element renders as a plain list; clicking it does not touch state.tagFilter', async () => {
+  await setState({ view: 'table' });
   const longItem = 'これは20文字を大きく超える長い説明文の要素です、以上、テスト用の文言です';
   await callTest('loadJSONText', JSON.stringify([
     { name: 'Item C', keyPoints: ['短い', longItem] }
@@ -297,6 +306,7 @@ test('UI: an array with a long element renders as a plain list; clicking it does
 // ---------------- updateFileTag() record count (query + tagFilter combined) ----------------
 
 test('fileTagText: tag-only filtering shows "filtered / total", matching the visible rows', async () => {
+  await setState({ view: 'table' });
   await callTest('loadJSONText', JSON.stringify([
     { name: 'Apple Pie', tags: ['Popular'] },
     { name: 'Apple Tart', tags: ['Seasonal'] },

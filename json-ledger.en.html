@@ -398,8 +398,8 @@
       <button class="btn ghost" id="sortDirToggle" disabled title="Toggle ascending/descending">▲ Asc</button>
     </div>
     <div class="toggle">
-      <button id="tableToggle" class="active">Table</button>
-      <button id="cardToggle">Card</button>
+      <button id="cardToggle" class="active">Card</button>
+      <button id="tableToggle">Table</button>
     </div>
   </div>
 
@@ -468,7 +468,7 @@
     fileName: "untitled.json",
     fileHandle: null,    // File System Access handle, if available
     wrapper: null,        // { type: 'root-array' } | { type: 'wrapped', key: 'items' } | { type: 'single-object' }
-    view: 'table',
+    view: 'card',
     query: '',
     tagFilter: null,       // when set, only records containing this tag value (in any array field) are shown
     showAddedAt: false,    // when true, _added_at is included in computeColumns() and shown as a normal column
