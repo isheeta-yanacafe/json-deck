@@ -62,7 +62,7 @@ Direct save/overwrite requires the File System Access API (available in Chromium
 
 ## Live demo
 
-https://isheeta-yanacafe.github.io/json-deck/
+https://isheeta-yanacafe.github.io/json-deck/json-deck.en.html
 
 `index.html` in this repo is not a past/stale version of the app — it's a small redirect stub (`json-deck.html` is the real app) that makes the GitHub Pages root URL above land on the Japanese version, with a link to the English one. Don't delete it.
 
