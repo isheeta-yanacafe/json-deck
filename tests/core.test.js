@@ -1,12 +1,12 @@
 // Minimal unit tests for the pure-logic core (normalize / computeColumns /
 // serialize / JSON parsing via loadJSONText / addRecord / sorting).
 //
-// json-ledger.html has no build step and wires its whole IIFE straight into
+// json-deck.html has no build step and wires its whole IIFE straight into
 // real DOM elements at load time (see the "Wire up controls" section), so
 // these internals can't be pulled out and run in plain Node. Instead we load
 // the actual file in a headless browser and reach into it through a
 // test-only hook (window.__TEST__ / window.__jsonLedgerTest, see
-// json-ledger.html) that stays inert unless a harness explicitly sets
+// json-deck.html) that stays inert unless a harness explicitly sets
 // window.__TEST__ = true first.
 //
 // Run with: npm test  (requires `npm install` once, for the playwright devDependency)
@@ -16,7 +16,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const INDEX_HTML_URL = 'file://' + path.resolve(__dirname, '..', 'json-ledger.html');
+const INDEX_HTML_URL = 'file://' + path.resolve(__dirname, '..', 'json-deck.html');
 
 let browser, page;
 

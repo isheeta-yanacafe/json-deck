@@ -1,4 +1,4 @@
-# JSON Ledger
+# JSON Deck
 
 A single-file, browser-based editor for local JSON files. It presents an array of JSON objects as an editable table or card view — no server, no build step, no dependencies.
 
@@ -62,13 +62,13 @@ Direct save/overwrite requires the File System Access API (available in Chromium
 
 ## Live demo
 
-https://isheeta-yanacafe.github.io/json-ledger/
+https://isheeta-yanacafe.github.io/json-deck/
 
-`index.html` in this repo is not a past/stale version of the app — it's a small redirect stub (`json-ledger.html` is the real app) that makes the GitHub Pages root URL above land on the Japanese version, with a link to the English one. Don't delete it.
+`index.html` in this repo is not a past/stale version of the app — it's a small redirect stub (`json-deck.html` is the real app) that makes the GitHub Pages root URL above land on the Japanese version, with a link to the English one. Don't delete it.
 
 ## Running locally
 
-No installation or build step is required — download `json-ledger.html` and open it directly in a browser.
+No installation or build step is required — download `json-deck.html` and open it directly in a browser.
 
 ## Roadmap
 
@@ -80,7 +80,7 @@ MIT — Copyright (c) 2026 Mosozo Inc. See [LICENSE](./LICENSE) for the full tex
 
 ---
 
-# JSON Ledger（日本語）
+# JSON Deck（日本語）
 
 ローカルのJSONファイルをブラウザだけで編集できる、単一HTMLファイルのエディタです。JSONオブジェクトの配列を、編集可能なテーブルまたはカードとして表示します。サーバー、ビルド手順、外部依存は一切不要です。
 
@@ -144,13 +144,13 @@ MIT — Copyright (c) 2026 Mosozo Inc. See [LICENSE](./LICENSE) for the full tex
 
 ## ライブデモ
 
-https://isheeta-yanacafe.github.io/json-ledger/
+https://isheeta-yanacafe.github.io/json-deck/
 
-このリポジトリ直下の `index.html` は、アプリの過去バージョンではありません。実体は `json-ledger.html`（本体）への**リダイレクト用スタブ**で、上記GitHub PagesのルートURLに日本語版へ転送する導線（英語版へのリンクも含む）を提供しています。削除しないでください。
+このリポジトリ直下の `index.html` は、アプリの過去バージョンではありません。実体は `json-deck.html`（本体）への**リダイレクト用スタブ**で、上記GitHub PagesのルートURLに日本語版へ転送する導線（英語版へのリンクも含む）を提供しています。削除しないでください。
 
 ## ローカルでの使い方
 
-インストールやビルド手順は不要です。`json-ledger.html` をダウンロードして、ブラウザで直接開くだけで動作します。
+インストールやビルド手順は不要です。`json-deck.html` をダウンロードして、ブラウザで直接開くだけで動作します。
 
 ## ロードマップ
 
