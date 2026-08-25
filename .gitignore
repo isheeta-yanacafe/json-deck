@@ -25,3 +25,6 @@ npm-debug.log*
 
 # Test tooling
 node_modules/
+
+# Git-WIP-Warp
+scripts/logs/
