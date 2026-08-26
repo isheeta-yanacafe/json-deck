@@ -42,6 +42,22 @@ else
     log "未コミットの変更はありませんでした。"
 fi
 
+if ! git ls-remote --exit-code --heads origin "${REMOTE_BRANCH}" >>"${LOG_FILE}" 2>>"${ERR_LOG_FILE}"; then
+    log "リモートに ${REMOTE_BRANCH} が存在しないため、受信をスキップします"
+    if [ "${STASHED}" -eq 1 ]; then
+        log "スキップのため、退避した stash を復元します。"
+        if git stash pop >>"${LOG_FILE}" 2>>"${ERR_LOG_FILE}"; then
+            log "stash pop に成功しました。"
+        else
+            err "git stash pop に失敗しました。git stash list で確認し、手動で復元してください。"
+            echo "エラー: stash pop に失敗しました。git stash list で確認してください。詳細は ${ERR_LOG_FILE} を確認してください。" >&2
+            exit 1
+        fi
+    fi
+    echo "ℹ️ 受信するものはありません（${REMOTE_BRANCH} が存在しません）"
+    exit 0
+fi
+
 log "git fetch origin ${REMOTE_BRANCH} を実行します。"
 if ! git fetch origin "${REMOTE_BRANCH}" >>"${LOG_FILE}" 2>>"${ERR_LOG_FILE}"; then
     err "git fetch origin ${REMOTE_BRANCH} に失敗しました。"
