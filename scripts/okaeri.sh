@@ -144,35 +144,43 @@ elif [ -s "${WIP_FILES_LIST_FILE}" ]; then
         exit 1
     fi
 
-    PROJECT_NAME="$(basename "${REPO_ROOT}")"
-    SYNC_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
-    COMMIT_MSG_FILE="$(mktemp)"
-    {
-        echo "chore(okaeri): auto-commit received WIP (${PROJECT_NAME}, ${SYNC_TIME})"
-        echo ""
-        echo "wip-warp-scratch: ${WIP_COMMIT_HASH:0:7} ${WIP_COMMIT_SUBJECT}"
-        echo ""
-        echo "Files:"
-        tr '\0' '\n' < "${WIP_FILES_LIST_FILE}" | sed '/^$/d' | sed 's/^/  /'
-    } > "${COMMIT_MSG_FILE}"
-
-    if ! git commit -F "${COMMIT_MSG_FILE}" >>"${LOG_FILE}" 2>>"${ERR_LOG_FILE}"; then
-        err "受信内容のコミットに失敗しました。git status で確認してください。stash は保持したままにしています。"
-        echo "エラー: 受信内容のコミットに失敗しました。git status で確認してください。詳細は ${ERR_LOG_FILE} を確認してください。" >&2
-        rm -f "${WIP_FILES_LIST_FILE}" "${STASH_FILES_LIST_FILE}" "${COMMIT_MSG_FILE}"
-        exit 1
-    fi
-    NEW_COMMIT_HASH="$(git rev-parse HEAD)"
-    log "受信内容をコミットしました: ${NEW_COMMIT_HASH}"
-    rm -f "${COMMIT_MSG_FILE}"
-
-    log "git push origin HEAD を実行します。"
-    if ! git push origin HEAD >>"${LOG_FILE}" 2>>"${ERR_LOG_FILE}"; then
-        err "git push に失敗しました。コミットはローカルに作成済みです（${NEW_COMMIT_HASH}）。手動で git push を実行してください（自動でのpull/mergeは行いません）。"
-        echo "⚠️ 受信内容はコミットしましたが push に失敗しました。手動で git push を実行してください。詳細は ${ERR_LOG_FILE} を確認してください。" >&2
-        PUSH_FAILED=1
+    if git diff --cached --quiet; then
+        # 受信ファイルがステージされたが、内容はHEADと完全に同一だった
+        # （wip-warp-scratchが既に取り込み済みの内容を指す古いブランチの
+        # まま残っていた場合など）。コミットするものが無いだけで異常
+        # ではないため、エラー扱いにしない。
+        log "受信ファイルはHEADと同一内容のため、コミット対象はありませんでした（stale wip-warp-scratchの可能性）。"
     else
-        log "push に成功しました。"
+        PROJECT_NAME="$(basename "${REPO_ROOT}")"
+        SYNC_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+        COMMIT_MSG_FILE="$(mktemp)"
+        {
+            echo "chore(okaeri): auto-commit received WIP (${PROJECT_NAME}, ${SYNC_TIME})"
+            echo ""
+            echo "wip-warp-scratch: ${WIP_COMMIT_HASH:0:7} ${WIP_COMMIT_SUBJECT}"
+            echo ""
+            echo "Files:"
+            tr '\0' '\n' < "${WIP_FILES_LIST_FILE}" | sed '/^$/d' | sed 's/^/  /'
+        } > "${COMMIT_MSG_FILE}"
+
+        if ! git commit -F "${COMMIT_MSG_FILE}" >>"${LOG_FILE}" 2>>"${ERR_LOG_FILE}"; then
+            err "受信内容のコミットに失敗しました。git status で確認してください。stash は保持したままにしています。"
+            echo "エラー: 受信内容のコミットに失敗しました。git status で確認してください。詳細は ${ERR_LOG_FILE} を確認してください。" >&2
+            rm -f "${WIP_FILES_LIST_FILE}" "${STASH_FILES_LIST_FILE}" "${COMMIT_MSG_FILE}"
+            exit 1
+        fi
+        NEW_COMMIT_HASH="$(git rev-parse HEAD)"
+        log "受信内容をコミットしました: ${NEW_COMMIT_HASH}"
+        rm -f "${COMMIT_MSG_FILE}"
+
+        log "git push origin HEAD を実行します。"
+        if ! git push origin HEAD >>"${LOG_FILE}" 2>>"${ERR_LOG_FILE}"; then
+            err "git push に失敗しました。コミットはローカルに作成済みです（${NEW_COMMIT_HASH}）。手動で git push を実行してください（自動でのpull/mergeは行いません）。"
+            echo "⚠️ 受信内容はコミットしましたが push に失敗しました。手動で git push を実行してください。詳細は ${ERR_LOG_FILE} を確認してください。" >&2
+            PUSH_FAILED=1
+        else
+            log "push に成功しました。"
+        fi
     fi
     # --- 自動コミット・pushここまで ---
 else
