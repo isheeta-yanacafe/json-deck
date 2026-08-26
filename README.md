@@ -159,3 +159,5 @@ https://isheeta-yanacafe.github.io/json-deck/
 ## ライセンス
 
 MIT — Copyright (c) 2026 Mosozo Inc. 全文は [LICENSE](./LICENSE) を参照してください。
+
+- 動作確認: 2026年8月26日 00時58分
