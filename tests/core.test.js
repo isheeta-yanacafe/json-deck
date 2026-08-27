@@ -432,8 +432,13 @@ test('table: a nested object field renders as an always-expanded JSON code block
   assert.equal(collapsedChipCount, 0, 'no collapsed "{...}" chip remains for a nested object');
 });
 
-test('table: the "編集" chip next to a nested object opens the existing edit modal, pre-filled, and saving updates the always-expanded view', async () => {
-  await page.click('#tbody .obj-json-wrap >> text=編集');
+test('table: the "{ }" button next to a nested object (same look as the scalar-value nestBtn) opens the existing edit modal, pre-filled, and saving updates the always-expanded view', async () => {
+  const editBtn = page.locator('#tbody .obj-json-wrap button.nest-btn');
+  assert.equal(await editBtn.textContent(), '{ }', 'looks identical to the scalar-value "{ }" button (nestBtn), not a text "編集" chip');
+  assert.equal(await editBtn.getAttribute('title'), 'JSONを直接入力して下位項目に変換',
+    'same title as nestBtn');
+
+  await editBtn.click();
   const ta = page.locator('.modal-overlay:not(.hidden) textarea');
   assert.equal(await ta.inputValue(), JSON.stringify({ w: 10, h: 20, d: 5 }, null, 2),
     'modal is pre-filled with the nested object\'s current JSON, same as before this change');

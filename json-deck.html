@@ -1298,7 +1298,12 @@
       // テキストとして常時展開表示する（{ }や引用符はエンジニア向けの表現なので出さない。
       // 「見る」は常にこの表示で完結させ、「編集」ボタンから既存の編集モーダルを開く）。
       const pre = el('pre', { class: 'obj-json-block' }, formatObjectLines(value));
-      const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '編集');
+      // スカラー値側の「{ }」ボタン（nestBtn）と全く同じ処理（openJsonModal）を
+      // 呼んでいるため、見た目もnestBtnと完全に統一する（class・表示テキスト・title）。
+      const editBtn = el('button', {
+        class: 'icon-btn nest-btn', title: 'JSONを直接入力して下位項目に変換',
+        onclick: () => openJsonModal(idx, key)
+      }, '{ }');
       content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
     }
 

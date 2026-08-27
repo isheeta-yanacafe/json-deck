@@ -1240,7 +1240,12 @@
       // needed here). "View" is fully handled by this display; "Edit" opens
       // the existing edit modal.
       const pre = el('pre', { class: 'obj-json-block' }, formatObjectLines(value));
-      const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, 'Edit');
+      // This calls the exact same openJsonModal as the scalar-value "{ }" button (nestBtn),
+      // so make it look identical too (class, label, title).
+      const editBtn = el('button', {
+        class: 'icon-btn nest-btn', title: 'Edit as raw JSON to convert into nested items',
+        onclick: () => openJsonModal(idx, key)
+      }, '{ }');
       content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
     }
 
