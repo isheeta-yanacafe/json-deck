@@ -1515,7 +1515,7 @@
         tr.appendChild(td);
       });
       tr.appendChild(el('td', { class: 'row-actions' },
-        el('button', { class: 'icon-btn', title: 'レコードのJSONを表示・編集', onclick: () => openRecordJsonModal(idx) }, '{ }'),
+        el('button', { class: 'icon-btn nest-btn', title: 'レコードのJSONを表示・編集', onclick: () => openRecordJsonModal(idx) }, '{ }'),
         el('button', { class: 'icon-btn', title: '削除', onclick: () => deleteRecord(idx) }, '🗑')
       ));
       tbody.appendChild(tr);
@@ -1547,7 +1547,7 @@
       card.appendChild(el('div', { class: 'card-top-row' },
         el('span', {}, ''),
         el('div', { class: 'card-actions' },
-          el('button', { class: 'icon-btn', title: 'レコードのJSONを表示・編集', onclick: () => openRecordJsonModal(idx) }, '{ }'),
+          el('button', { class: 'icon-btn nest-btn', title: 'レコードのJSONを表示・編集', onclick: () => openRecordJsonModal(idx) }, '{ }'),
           el('button', { class: 'icon-btn', title: '削除', onclick: () => deleteRecord(idx) }, '🗑')
         )
       ));
