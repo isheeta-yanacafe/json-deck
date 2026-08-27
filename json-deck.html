@@ -253,7 +253,6 @@
     font-family: var(--font-data); font-size: 11px; color: var(--ink-soft);
     white-space: pre-wrap; word-break: break-word;
   }
-  .obj-fields-note{ font-size:10px; color: var(--ink-soft); opacity:0.8; max-width:100%; }
 
   /* nested array-of-objects accordion */
   .nested-array{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
@@ -1200,27 +1199,8 @@
       }
     }, '+項目');
     const nestBtn = el('button', {
-      class: 'icon-btn nest-btn', title: 'オブジェクトに変換',
-      onclick: () => {
-        // クロージャのvalueは最後にrender()された時点のスナップショットで古い場合があるため、
-        // クリック時点の実際の値を読み直す（addSubBtnと同じ理由）。
-        const currentValue = state.records[idx][key];
-        const hasContent = currentValue !== '' && currentValue !== null && currentValue !== undefined;
-        if (hasContent){
-          if (!confirm('「' + key + '」の現在の値「' + currentValue + '」はオブジェクトに置き換わり、失われます。\n\n続行しますか？')) return;
-        }
-        pushUndo();
-        // __addFieldUI は非enumerableなマーカー。ボタン操作だけで項目を組み立てられる
-        // 一時的なUIを出し分けるためだけのフラグで、Object.keys()やJSON.stringify()には
-        // 一切現れない（保存JSONやプレーンテキスト表示、生JSON編集モーダルを汚さない）。
-        // ファイル保存→再読み込みやJSON.parseを経ると自然に消える一時的な状態でよい。
-        const newObj = {};
-        Object.defineProperty(newObj, '__addFieldUI', {
-          value: true, enumerable: false, configurable: true
-        });
-        updateValue(idx, key, newObj);
-        render();
-      }
+      class: 'icon-btn nest-btn', title: 'JSONを直接入力して下位項目に変換',
+      onclick: () => openJsonModal(idx, key)
     }, '{ }');
     const children = isLabelCol ? [control] : [control, addSubBtn, nestBtn];
     if (hasKey){
@@ -1319,35 +1299,7 @@
       // 「見る」は常にこの表示で完結させ、「編集」ボタンから既存の編集モーダルを開く）。
       const pre = el('pre', { class: 'obj-json-block' }, formatObjectLines(value));
       const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '編集');
-      const wrapChildren = [pre, editBtn];
-
-      // { }ボタン（nestBtn）で新規に空オブジェクトへ変換した直後だけ、renderNestedField
-      // （配列アイテムの編集で使っているのと同じ関数）を再利用したボタン操作だけの
-      // フィールド追加UIを併設する。__addFieldUIは非enumerableなマーカーなので、
-      // dimensions・warehouseLocationのような既存の複数キーオブジェクトには一切現れず、
-      // このUIも表示されない（今まで通りプレーンテキスト＋「編集」チップのみ）。
-      if (value.__addFieldUI === true){
-        const fieldsBody = el('div', { class: 'nested-item-body' });
-        Object.keys(value).forEach(k =>
-          fieldsBody.appendChild(renderNestedField(value, k, () => { markDirty(); render(); })));
-        const addFieldBtn = el('button', {
-          class: 'nested-btn', title: 'この項目に新しいフィールドを追加します',
-          onclick: () => {
-            const name = prompt('新しい項目名（キー）を入力してください:');
-            if (!name) return;
-            if (name in value){ toast('⚠ フィールド名「' + name + '」は既に使われています'); return; }
-            pushUndo();
-            value[name] = '';
-            markDirty();
-            render();
-          }
-        }, '＋ フィールド');
-        const note = el('div', { class: 'obj-fields-note' },
-          '※ この操作方法は今回だけです。保存して読み込み直すと「編集」ボタンからJSONを直接編集する方法のみとなります。');
-        wrapChildren.push(fieldsBody, addFieldBtn, note);
-      }
-
-      content = el('div', { class: 'obj-json-wrap' }, ...wrapChildren);
+      content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
     }
 
     const delBtn = el('button', {
