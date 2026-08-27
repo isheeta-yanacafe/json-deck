@@ -1250,6 +1250,22 @@
     return inferArrayKind(key);
   }
 
+  // ネストしたオブジェクトのコードブロック表示用: { } やキー・文字列値の引用符を
+  // 出さず、「key: value」を1行ずつ並べたプレーンテキストを組み立てる。
+  // 値がさらにオブジェクト/配列の場合は、そこだけ JSON.stringify（1行・整形なし）を
+  // そのまま使う（既存の仕組みを壊さない範囲での割り切り）。
+  function formatObjectLines(obj){
+    return Object.keys(obj).map(k => {
+      const v = obj[k];
+      let vStr;
+      if (v === null) vStr = 'null';
+      else if (typeof v === 'string') vStr = v;
+      else if (typeof v === 'object') vStr = JSON.stringify(v);
+      else vStr = String(v);
+      return k + ': ' + vStr;
+    }).join('\n');
+  }
+
   function renderCellContent(idx, key){
     const value = state.records[idx][key];
     const type = valueType(value);
@@ -1278,9 +1294,10 @@
         content = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '[配列] ' + value.length + '件 編集');
       }
     } else {
-      // ネストしたオブジェクトは折りたたまず、整形済みJSONとして常時展開表示する
-      // （「見る」は常にこの表示で完結させ、「編集」ボタンから既存の編集モーダルを開く）。
-      const pre = el('pre', { class: 'obj-json-block' }, JSON.stringify(value, null, 2));
+      // ネストしたオブジェクトは折りたたまず、「key: value」の1行ずつのプレーン
+      // テキストとして常時展開表示する（{ }や引用符はエンジニア向けの表現なので出さない。
+      // 「見る」は常にこの表示で完結させ、「編集」ボタンから既存の編集モーダルを開く）。
+      const pre = el('pre', { class: 'obj-json-block' }, formatObjectLines(value));
       const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '編集');
       content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
     }
@@ -1594,7 +1611,7 @@
     window.__jsonLedgerTest = {
       state, normalize, serialize, computeColumns, loadJSONText,
       addRecord, getDisplayOrder, compareSortValues, formatAddedAt,
-      isTagLikeArray, arrayCellKind, updateFileTag, render
+      isTagLikeArray, arrayCellKind, formatObjectLines, updateFileTag, render
     };
   }
 

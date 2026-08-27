@@ -425,8 +425,8 @@ test('table: a nested object field renders as an always-expanded JSON code block
   await callTest('render');
 
   const blockText = await page.textContent('#tbody .obj-json-block');
-  assert.equal(blockText, JSON.stringify({ w: 10, h: 20, d: 5 }, null, 2),
-    'shows the object as pretty-printed JSON, matching JSON.stringify(value, null, 2)');
+  assert.equal(blockText, 'w: 10\nh: 20\nd: 5',
+    'shows plain "key: value" lines, one per property, no braces or quotes');
 
   const collapsedChipCount = await page.locator('#tbody >> text=/^\\{\\.\\.\\.\\}/').count();
   assert.equal(collapsedChipCount, 0, 'no collapsed "{...}" chip remains for a nested object');
@@ -446,7 +446,7 @@ test('table: the "編集" chip next to a nested object opens the existing edit m
   assert.deepEqual(state.records[0].dimensions, { w: 99, h: 20, d: 5 }, 'saving from the modal still updates the record');
 
   const blockText = await page.textContent('#tbody .obj-json-block');
-  assert.equal(blockText, JSON.stringify({ w: 99, h: 20, d: 5 }, null, 2),
+  assert.equal(blockText, 'w: 99\nh: 20\nd: 5',
     'the always-expanded view reflects the saved value without needing to re-expand anything');
 });
 
@@ -455,7 +455,7 @@ test('card: a nested object field renders the same always-expanded code block as
   await callTest('render');
 
   const blockText = await page.textContent('#cardGrid .obj-json-block');
-  assert.equal(blockText, JSON.stringify({ w: 99, h: 20, d: 5 }, null, 2));
+  assert.equal(blockText, 'w: 99\nh: 20\nd: 5');
 
   await setState({ view: 'table' });
   await callTest('render');
@@ -472,4 +472,31 @@ test('nested object display change does not affect tag chip rendering on the sam
 
   const objBlockCount = await page.locator('#tbody .obj-json-block').count();
   assert.equal(objBlockCount, 1, 'the nested object field still gets its own always-expanded code block');
+});
+
+// ---------------- formatObjectLines() (nested-object display: "key: value" lines, no braces/quotes) ----------------
+
+test('formatObjectLines: builds one "key: value" line per property, no braces, no quotes around keys or string values', async () => {
+  const result = await callTest('formatObjectLines', { aisle: 'A1', shelf: 3, fragile: true });
+  assert.equal(result, 'aisle: A1\nshelf: 3\nfragile: true');
+  assert.ok(!result.includes('{') && !result.includes('}'), 'no braces anywhere in the output: ' + result);
+  assert.ok(!result.includes('"'), 'no quotes anywhere in the output (string value "A1" is shown bare): ' + result);
+});
+
+test('formatObjectLines: null renders as the word "null"; a nested object/array value falls back to inline JSON.stringify for just that value', async () => {
+  const result = await callTest('formatObjectLines', { note: null, meta: { a: 1 }, list: [1, 2] });
+  assert.equal(result, 'note: null\nmeta: {"a":1}\nlist: [1,2]');
+});
+
+test('table: a nested object with a string field shows the value with no surrounding quotes in the DOM', async () => {
+  await setState({ view: 'table' });
+  await callTest('loadJSONText', JSON.stringify([
+    { name: 'Item A', warehouseLocation: { aisle: 'A1', shelf: 3 } }
+  ]), 'nested-obj-strings.json');
+  await callTest('render');
+
+  const blockText = await page.textContent('#tbody .obj-json-block');
+  assert.equal(blockText, 'aisle: A1\nshelf: 3');
+  assert.ok(!blockText.includes('"'), 'the rendered code block has no quote characters: ' + blockText);
+  assert.ok(!blockText.includes('{') && !blockText.includes('}'), 'the rendered code block has no braces: ' + blockText);
 });

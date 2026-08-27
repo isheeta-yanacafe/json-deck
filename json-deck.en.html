@@ -1194,6 +1194,22 @@
     return inferArrayKind(key);
   }
 
+  // For the nested-object code-block view: build plain "key: value" lines,
+  // one per line, without braces or quotes around keys/string values. If a
+  // value is itself an object/array, fall back to a single-line JSON.stringify
+  // for just that value (a deliberate simplification, not a full renderer).
+  function formatObjectLines(obj){
+    return Object.keys(obj).map(k => {
+      const v = obj[k];
+      let vStr;
+      if (v === null) vStr = 'null';
+      else if (typeof v === 'string') vStr = v;
+      else if (typeof v === 'object') vStr = JSON.stringify(v);
+      else vStr = String(v);
+      return k + ': ' + vStr;
+    }).join('\n');
+  }
+
   function renderCellContent(idx, key){
     const value = state.records[idx][key];
     const type = valueType(value);
@@ -1219,9 +1235,11 @@
         content = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '[Array] ' + value.length + ' items \u2014 Edit');
       }
     } else {
-      // Nested objects are no longer collapsed; show formatted JSON always expanded
-      // ("view" is fully handled by this display; "Edit" opens the existing edit modal).
-      const pre = el('pre', { class: 'obj-json-block' }, JSON.stringify(value, null, 2));
+      // Nested objects are no longer collapsed; show plain "key: value" lines,
+      // always expanded (braces/quotes are an engineer-facing notation, not
+      // needed here). "View" is fully handled by this display; "Edit" opens
+      // the existing edit modal.
+      const pre = el('pre', { class: 'obj-json-block' }, formatObjectLines(value));
       const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, 'Edit');
       content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
     }
@@ -1529,7 +1547,8 @@
   if (typeof window !== 'undefined' && window.__TEST__){
     window.__jsonLedgerTest = {
       state, normalize, serialize, computeColumns, loadJSONText,
-      addRecord, getDisplayOrder, compareSortValues, formatAddedAt
+      addRecord, getDisplayOrder, compareSortValues, formatAddedAt,
+      formatObjectLines
     };
   }
 
