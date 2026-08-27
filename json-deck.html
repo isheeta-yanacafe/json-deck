@@ -188,6 +188,7 @@
      複合セレクタにして詳細度を確実に上回るようにした。 */
   .icon-btn.nest-btn{
     font-family: var(--font-data); font-size: 10px; flex-shrink:0;
+    white-space: nowrap;
   }
   .col-name{ cursor: pointer; }
   .rec-card .rec-label{ cursor: pointer; }
@@ -343,7 +344,7 @@
   .rec-card .card-move span:hover{ opacity:1; color: var(--felt); }
   .rec-card .rec-value{ font-family: var(--font-data); font-size: 13px; line-height:1.5; }
   .rec-card .card-top-row{ display:flex; justify-content:space-between; align-items:flex-start; margin-top: 6px;}
-  .rec-card .card-actions{ display:flex; gap:4px; }
+  .rec-card .card-actions{ display:flex; align-items:flex-start; gap:4px; }
 
   /* ---------- Modal (nested JSON editor) ---------- */
   .modal-overlay{
