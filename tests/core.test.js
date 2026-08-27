@@ -500,3 +500,115 @@ test('table: a nested object with a string field shows the value with no surroun
   assert.ok(!blockText.includes('"'), 'the rendered code block has no quote characters: ' + blockText);
   assert.ok(!blockText.includes('{') && !blockText.includes('}'), 'the rendered code block has no braces: ' + blockText);
 });
+
+// ---------------- nestBtn ("{ }"): convert to an empty object with button-driven field UI ----------------
+// nestBtn used to open the raw-JSON edit modal to convert a primitive into nested items.
+// It now converts straight to an empty object (no JSON to write by hand), marked with a
+// non-enumerable __addFieldUI flag that renderCellContent uses to show a button-driven
+// field editor (reusing renderNestedField, the same function array-item editing uses).
+// That editor must NOT appear on plain objects loaded from a file (dimensions etc.), and
+// __addFieldUI must never leak into the plain-text view, the raw-JSON modal, or saved JSON.
+
+test('table: clicking "{ }" (nestBtn) on an empty value converts it to an object without opening the JSON modal, and shows the field-add UI', async () => {
+  await setState({ view: 'table' });
+  await callTest('loadJSONText', JSON.stringify([
+    { spec: '' }
+  ]), 'nestbtn-convert.json');
+  await callTest('render');
+
+  await page.click('#tbody button[title="オブジェクトに変換"]');
+  await page.waitForTimeout(50);
+
+  assert.equal(await page.locator('.modal-overlay:not(.hidden)').count(), 0,
+    'no raw-JSON edit modal opens');
+
+  const state = await getState();
+  assert.deepEqual(state.records[0].spec, {}, 'the value becomes a plain empty object');
+
+  assert.equal(await page.locator('#tbody .nested-btn:has-text("＋ フィールド")').count(), 1,
+    'the button-driven "add field" UI appears for this freshly-converted object');
+  assert.equal(await page.locator('#tbody .obj-fields-note').count(), 1,
+    'the "only available now" note is shown');
+});
+
+test('table: "＋ フィールド" can add more than one field in a row (does not stop after the first)', async () => {
+  page.once('dialog', d => d.accept('color'));
+  await page.click('#tbody .nested-btn:has-text("＋ フィールド")');
+  await page.waitForTimeout(50);
+
+  page.once('dialog', d => d.accept('size'));
+  await page.click('#tbody .nested-btn:has-text("＋ フィールド")');
+  await page.waitForTimeout(50);
+
+  const state = await getState();
+  assert.deepEqual(Object.keys(state.records[0].spec), ['color', 'size'],
+    'both fields were added, one after another, to the same object');
+
+  const fieldLabels = await page.$$eval('#tbody .nested-field-label', els => els.map(e => e.textContent));
+  assert.deepEqual(fieldLabels, ['color', 'size'], 'both fields render with the button-driven editor');
+});
+
+test('table: the field-add UI does not appear on a pre-existing multi-key nested object (e.g. dimensions)', async () => {
+  await callTest('loadJSONText', JSON.stringify([
+    { name: 'Item A', dimensions: { w: 10, h: 20, d: 5 } }
+  ]), 'nestbtn-preexisting.json');
+  await callTest('render');
+
+  assert.equal(await page.locator('#tbody .nested-btn').count(), 0,
+    'no "＋ フィールド" button for an object that was not created via nestBtn');
+  assert.equal(await page.locator('#tbody .obj-fields-note').count(), 0,
+    'no "only available now" note either');
+
+  const blockText = await page.textContent('#tbody .obj-json-block');
+  assert.equal(blockText, 'w: 10\nh: 20\nd: 5', 'still shows the plain key: value view, unaffected');
+});
+
+test('__addFieldUI never appears in the plain-text view, the raw-JSON edit modal, or the saved JSON', async () => {
+  await callTest('loadJSONText', JSON.stringify([
+    { spec: '' }
+  ]), 'nestbtn-leak-check.json');
+  await callTest('render');
+
+  await page.click('#tbody button[title="オブジェクトに変換"]');
+  page.once('dialog', d => d.accept('color'));
+  await page.click('#tbody .nested-btn:has-text("＋ フィールド")');
+  await page.waitForTimeout(50);
+
+  const blockText = await page.textContent('#tbody .obj-json-block');
+  assert.ok(!blockText.includes('__addFieldUI'), 'plain-text view has no trace of the marker: ' + blockText);
+
+  await page.click('#tbody .obj-json-wrap >> text=編集');
+  const ta = page.locator('.modal-overlay:not(.hidden) textarea');
+  const modalText = await ta.inputValue();
+  assert.ok(!modalText.includes('__addFieldUI'), 'raw-JSON edit modal has no trace of the marker: ' + modalText);
+  await page.click('.modal-overlay:not(.hidden) >> text=キャンセル');
+
+  const saved = await callTest('serialize');
+  assert.deepEqual(Object.keys(saved[0].spec), ['color'], 'Object.keys() on the saved structure does not include the marker');
+  assert.ok(!JSON.stringify(saved).includes('__addFieldUI'), 'JSON.stringify() of the saved structure has no trace of the marker');
+});
+
+test('after a save/reload round-trip, the field-add UI disappears and the object behaves like any other loaded nested object', async () => {
+  await callTest('loadJSONText', JSON.stringify([
+    { spec: '' }
+  ]), 'nestbtn-reload.json');
+  await callTest('render');
+
+  await page.click('#tbody button[title="オブジェクトに変換"]');
+  page.once('dialog', d => d.accept('color'));
+  await page.click('#tbody .nested-btn:has-text("＋ フィールド")');
+  await page.waitForTimeout(50);
+
+  // Simulate save -> reopen: serialize (JSON.stringify under the hood, drops non-enumerable
+  // properties) then load that same text back in, exactly like opening a saved file.
+  const saved = await callTest('serialize');
+  await callTest('loadJSONText', JSON.stringify(saved), 'nestbtn-reload.json');
+  await callTest('render');
+
+  assert.equal(await page.locator('#tbody .nested-btn').count(), 0,
+    'the field-add UI is gone after the reload round-trip');
+  assert.equal(await page.locator('#tbody .obj-fields-note').count(), 0);
+
+  const blockText = await page.textContent('#tbody .obj-json-block');
+  assert.equal(blockText, 'color: ', 'the field survives the round-trip and now renders via the plain view only');
+});

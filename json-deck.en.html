@@ -243,6 +243,7 @@
     font-family: var(--font-data); font-size: 11px; color: var(--ink-soft);
     white-space: pre-wrap; word-break: break-word;
   }
+  .obj-fields-note{ font-size:10px; color: var(--ink-soft); opacity:0.8; max-width:100%; }
 
   /* nested array-of-objects accordion */
   .nested-array{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
@@ -1156,8 +1157,27 @@
       }
     }, '+Field');
     const nestBtn = el('button', {
-      class: 'icon-btn nest-btn', title: 'Edit as raw JSON to convert into nested items',
-      onclick: () => openJsonModal(idx, key)
+      class: 'icon-btn nest-btn', title: 'Convert to an object',
+      onclick: () => {
+        // The closed-over "value" can be stale (a snapshot from the last render); re-read
+        // the live value at click time, same reason as addSubBtn.
+        const currentValue = state.records[idx][key];
+        const hasContent = currentValue !== '' && currentValue !== null && currentValue !== undefined;
+        if (hasContent){
+          if (!confirm('The current value of “' + key + '” (“' + currentValue + '”) will be replaced with an object and lost.\n\nContinue?')) return;
+        }
+        pushUndo();
+        // __addFieldUI is a non-enumerable marker used only to pick which UI to render.
+        // It never shows up via Object.keys() or JSON.stringify(), so it never leaks into
+        // the saved JSON, the plain-text view, or the raw-JSON edit modal. It's a transient
+        // in-memory state that naturally disappears through a save/reload or JSON.parse.
+        const newObj = {};
+        Object.defineProperty(newObj, '__addFieldUI', {
+          value: true, enumerable: false, configurable: true
+        });
+        updateValue(idx, key, newObj);
+        render();
+      }
     }, '{ }');
     const children = isLabelCol ? [control] : [control, addSubBtn, nestBtn];
     if (hasKey){
@@ -1241,7 +1261,35 @@
       // the existing edit modal.
       const pre = el('pre', { class: 'obj-json-block' }, formatObjectLines(value));
       const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, 'Edit');
-      content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
+      const wrapChildren = [pre, editBtn];
+
+      // Right after nestBtn ("{ }") converts a value into a new empty object, reuse
+      // renderNestedField (the same function used for array-item field editing) to offer
+      // a button-driven way to add fields. __addFieldUI is non-enumerable, so it never
+      // appears on existing multi-key objects like dimensions/warehouseLocation — those
+      // keep showing only the plain-text view + "Edit" chip, unaffected.
+      if (value.__addFieldUI === true){
+        const fieldsBody = el('div', { class: 'nested-item-body' });
+        Object.keys(value).forEach(k =>
+          fieldsBody.appendChild(renderNestedField(value, k, () => { markDirty(); render(); })));
+        const addFieldBtn = el('button', {
+          class: 'nested-btn', title: 'Add a new field to this item',
+          onclick: () => {
+            const name = prompt('Enter a name for the new field (key):');
+            if (!name) return;
+            if (name in value){ toast('⚠ The field name "' + name + '" is already used'); return; }
+            pushUndo();
+            value[name] = '';
+            markDirty();
+            render();
+          }
+        }, '+ Add Field');
+        const note = el('div', { class: 'obj-fields-note' },
+          'This button-based editing is only available right now. After saving and reopening the file, use the “Edit” button to edit the raw JSON instead.');
+        wrapChildren.push(fieldsBody, addFieldBtn, note);
+      }
+
+      content = el('div', { class: 'obj-json-wrap' }, ...wrapChildren);
     }
 
     const delBtn = el('button', {
