@@ -414,3 +414,62 @@ test('record JSON modal: invalid JSON shows an error and does not close the moda
   assert.match(err, /⚠/);
   await page.click('.modal-overlay:not(.hidden) >> text=キャンセル');
 });
+
+// ---------------- Nested object field: always-expanded code block instead of a collapsed "{...} 編集" chip ----------------
+
+test('table: a nested object field renders as an always-expanded JSON code block, not a collapsed "{...}" chip', async () => {
+  await setState({ view: 'table' });
+  await callTest('loadJSONText', JSON.stringify([
+    { name: 'Item A', dimensions: { w: 10, h: 20, d: 5 } }
+  ]), 'nested-obj.json');
+  await callTest('render');
+
+  const blockText = await page.textContent('#tbody .obj-json-block');
+  assert.equal(blockText, JSON.stringify({ w: 10, h: 20, d: 5 }, null, 2),
+    'shows the object as pretty-printed JSON, matching JSON.stringify(value, null, 2)');
+
+  const collapsedChipCount = await page.locator('#tbody >> text=/^\\{\\.\\.\\.\\}/').count();
+  assert.equal(collapsedChipCount, 0, 'no collapsed "{...}" chip remains for a nested object');
+});
+
+test('table: the "編集" chip next to a nested object opens the existing edit modal, pre-filled, and saving updates the always-expanded view', async () => {
+  await page.click('#tbody .obj-json-wrap >> text=編集');
+  const ta = page.locator('.modal-overlay:not(.hidden) textarea');
+  assert.equal(await ta.inputValue(), JSON.stringify({ w: 10, h: 20, d: 5 }, null, 2),
+    'modal is pre-filled with the nested object\'s current JSON, same as before this change');
+
+  await ta.fill(JSON.stringify({ w: 99, h: 20, d: 5 }, null, 2));
+  await page.click('.modal-overlay:not(.hidden) >> text=保存');
+  await page.waitForTimeout(100);
+
+  const state = await getState();
+  assert.deepEqual(state.records[0].dimensions, { w: 99, h: 20, d: 5 }, 'saving from the modal still updates the record');
+
+  const blockText = await page.textContent('#tbody .obj-json-block');
+  assert.equal(blockText, JSON.stringify({ w: 99, h: 20, d: 5 }, null, 2),
+    'the always-expanded view reflects the saved value without needing to re-expand anything');
+});
+
+test('card: a nested object field renders the same always-expanded code block as table view', async () => {
+  await setState({ view: 'card' });
+  await callTest('render');
+
+  const blockText = await page.textContent('#cardGrid .obj-json-block');
+  assert.equal(blockText, JSON.stringify({ w: 99, h: 20, d: 5 }, null, 2));
+
+  await setState({ view: 'table' });
+  await callTest('render');
+});
+
+test('nested object display change does not affect tag chip rendering on the same record', async () => {
+  await callTest('loadJSONText', JSON.stringify([
+    { name: 'Item A', tags: ['人気', '定番'], dimensions: { w: 1, h: 2, d: 3 } }
+  ]), 'nested-obj-with-tags.json');
+  await callTest('render');
+
+  const tagChipCount = await page.$$eval('#tbody .tag', els => els.length);
+  assert.equal(tagChipCount, 2, 'tags still render as tag chips, unaffected by the nested-object display change');
+
+  const objBlockCount = await page.locator('#tbody .obj-json-block').count();
+  assert.equal(objBlockCount, 1, 'the nested object field still gets its own always-expanded code block');
+});

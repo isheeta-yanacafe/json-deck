@@ -245,6 +245,15 @@
   }
   .obj-chip:hover{ border-color: var(--felt); color: var(--ink); }
 
+  /* nested object: always-expanded code-block view (see, as opposed to edit) */
+  .obj-json-wrap{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; max-width:100%; }
+  .obj-json-block{
+    margin:0; padding:6px 8px; max-width:100%; box-sizing:border-box;
+    background: var(--card-dim); border: 1px solid var(--line); border-radius: 3px;
+    font-family: var(--font-data); font-size: 11px; color: var(--ink-soft);
+    white-space: pre-wrap; word-break: break-word;
+  }
+
   /* nested array-of-objects accordion */
   .nested-array{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
   .nested-toggle{ user-select:none; font-family: var(--font-data); }
@@ -1269,7 +1278,11 @@
         content = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '[配列] ' + value.length + '件 編集');
       }
     } else {
-      content = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '{...} 編集');
+      // ネストしたオブジェクトは折りたたまず、整形済みJSONとして常時展開表示する
+      // （「見る」は常にこの表示で完結させ、「編集」ボタンから既存の編集モーダルを開く）。
+      const pre = el('pre', { class: 'obj-json-block' }, JSON.stringify(value, null, 2));
+      const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '編集');
+      content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
     }
 
     const delBtn = el('button', {

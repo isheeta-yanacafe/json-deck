@@ -235,6 +235,15 @@
   }
   .obj-chip:hover{ border-color: var(--felt); color: var(--ink); }
 
+  /* nested object: always-expanded code-block view (see, as opposed to edit) */
+  .obj-json-wrap{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; max-width:100%; }
+  .obj-json-block{
+    margin:0; padding:6px 8px; max-width:100%; box-sizing:border-box;
+    background: var(--card-dim); border: 1px solid var(--line); border-radius: 3px;
+    font-family: var(--font-data); font-size: 11px; color: var(--ink-soft);
+    white-space: pre-wrap; word-break: break-word;
+  }
+
   /* nested array-of-objects accordion */
   .nested-array{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
   .nested-toggle{ user-select:none; font-family: var(--font-data); }
@@ -1210,7 +1219,11 @@
         content = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '[Array] ' + value.length + ' items \u2014 Edit');
       }
     } else {
-      content = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, '{...} Edit');
+      // Nested objects are no longer collapsed; show formatted JSON always expanded
+      // ("view" is fully handled by this display; "Edit" opens the existing edit modal).
+      const pre = el('pre', { class: 'obj-json-block' }, JSON.stringify(value, null, 2));
+      const editBtn = el('span', { class: 'obj-chip', onclick: () => openJsonModal(idx, key) }, 'Edit');
+      content = el('div', { class: 'obj-json-wrap' }, pre, editBtn);
     }
 
     const delBtn = el('button', {
