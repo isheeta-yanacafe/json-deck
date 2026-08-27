@@ -181,7 +181,12 @@
   }
   .cell-wrap{ display:flex; align-items:flex-start; gap:4px; flex-wrap:wrap; }
   .cell-wrap > :first-child{ flex:1 1 70px; min-width:70px; }
-  .nest-btn{
+  /* .icon-btn.nest-btn (compound selector) is deliberate. A plain .nest-btn has the
+     same specificity as .icon-btn (both a single class selector), so .icon-btn's
+     font-size:13px, declared later in source order, always won and this rule's
+     font-size:10px never took effect (the actual cause of the wide gap inside "{ }").
+     The compound selector guarantees this rule outranks .icon-btn regardless of order. */
+  .icon-btn.nest-btn{
     font-family: var(--font-data); font-size: 10px; flex-shrink:0;
   }
   .col-name{ cursor: pointer; }

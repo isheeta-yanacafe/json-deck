@@ -181,7 +181,12 @@
   }
   .cell-wrap{ display:flex; align-items:flex-start; gap:4px; flex-wrap:wrap; }
   .cell-wrap > :first-child{ flex:1 1 70px; min-width:70px; }
-  .nest-btn{
+  /* .icon-btn.nest-btn（複合セレクタ）にしているのは意図的。単に .nest-btn だと
+     .icon-btn と詳細度が同じ単一クラスセレクタ同士になり、後方に定義されている
+     .icon-btn の font-size:13px がソース順で勝ってしまい、ここのfont-size:10px が
+     一度も効かない状態になっていた（波カッコの間の余白が広く見えていた原因）。
+     複合セレクタにして詳細度を確実に上回るようにした。 */
+  .icon-btn.nest-btn{
     font-family: var(--font-data); font-size: 10px; flex-shrink:0;
   }
   .col-name{ cursor: pointer; }
