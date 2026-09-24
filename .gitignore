@@ -28,3 +28,4 @@ node_modules/
 
 # Git-WIP-Warp
 scripts/logs/
+.claude/worktrees/
